@@ -93,3 +93,13 @@ Para adicionar novos serviços à biblioteca RPC temos alguns passos:
 **Processamento da mensagem do cliente e resultado pelo servidor:**
 
 ![alt text](img/server_message.png)
+
+**Exemplo de divisão por zero:**
+
+**Server:**
+
+![alt text](img/server_divide_zero.png)
+
+**Client:**
+
+![alt text](img/client_divide_zero.png)
