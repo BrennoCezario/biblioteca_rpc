@@ -8,9 +8,11 @@ BINDER_IP = '127.0.0.1'
 BINDER_PORT = 5000
 
 class Server:
-    def __init__(self, service_name, ip):
+    def __init__(self, ip):
         self.ip = ip
-        self.service_name = service_name
+        self.services = {
+            'math': math_service.DistributedCalculator()
+        }
         self.port = 5001
     
     def handle_client(self, conn, addr):
@@ -26,28 +28,26 @@ class Server:
                 codec = serializer.Serializer()
                 function_name, args = codec.desserialize_function(message)
                 print(f"Mensagem Desserializada: {function_name, args}")
+
+                service = self.services.get(self.service_name)
+                if not service:
+                    print(f"Serviço {self.service_name} não existe")
                 
-                math = math_service.DistributedCalculator()
-                result = None
+                if not hasattr(service, function_name):
+                    print(f"Método {function_name} não encontrado")
                 
-                match function_name:
-                    case "add":
-                        result = math.add(*args)
-                    case "sub":
-                        result = math.sub(*args)
-                    case "multiply":
-                        result = math.multiply(*args)
-                    case "divide":
-                        result = math.divide(*args)
-                
+                method = getattr(service, function_name)
+                result = method(*args)
                 
                 print(f"Resultado da Operação: {result}\n")
                 serialized_message = codec.serialize_result(result)
                 conn.send(serialized_message)
+            
             except Exception:
                 conn.send(codec.serialize_result(f"ERROR:{str(Exception)}"))
                 
-    def start_service_register(self):
+    def start_service_register(self, service_name):
+        self.service_name = service_name
         register_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         register_socket.connect((BINDER_IP, BINDER_PORT))
 
@@ -64,7 +64,6 @@ class Server:
             print("Serviço Registrado com sucesso\n")
         
     def start_server(self):
-        self.start_service_register()
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.bind((self.ip, self.port))
         server_socket.listen()
