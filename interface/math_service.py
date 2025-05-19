@@ -26,4 +26,4 @@ class DistributedCalculator:
         except TypeError:
             return "ERRO: Necessário inserir um valor de tipo numérico (Exemplo: int ou float)"
         except ZeroDivisionError:
-            return "ERRO: Necessário inserir valores do tipo integer ou float!"
+            return "ERRO: Não é possível realizar divisão por 0!"

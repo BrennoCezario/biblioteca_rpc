@@ -1,5 +1,5 @@
 import socket
-import serializer
+from . import serializer
 
 class MathStub:
     def __init__(self, server_ip, server_port):

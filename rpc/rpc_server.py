@@ -1,18 +1,17 @@
 import socket
 import threading
 import os
-from rpc import serializer
+from . import serializer
 from interface import math_service
-
-HOST = '127.0.0.1'
-PORT = 5001
 
 BINDER_IP = '127.0.0.1'
 BINDER_PORT = 5000
 
 class Server:
-    def __init__(self):
-        pass
+    def __init__(self, service_name, ip):
+        self.ip = ip
+        self.service_name = service_name
+        self.port = 5001
     
     def handle_client(self, conn, addr):
         while True:
@@ -52,17 +51,22 @@ class Server:
         register_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         register_socket.connect((BINDER_IP, BINDER_PORT))
 
-        register_message = f"REGISTER|math|{HOST}|{PORT}"
+        print("Vamos iniciar o registro de um serviço!")
+        register_message = f"REGISTER|{self.service_name}|{self.ip}|{self.port}"
+        
         print(f"\nIniciando registro de serviço com {register_message}\n")
 
         register_socket.send(register_message.encode())
         register_response = register_socket.recv(1024).decode()
-        print("Um serviço com esse nome já está registrado\n" if register_response == "ERRO" else "Serviço Registrado com sucesso\n")
+        if register_response == "ERRO":
+            print("Um serviço com esse nome já está registrado\n")
+        else:
+            print("Serviço Registrado com sucesso\n")
         
     def start_server(self):
         self.start_service_register()
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind((HOST, PORT))
+        server_socket.bind((self.ip, self.port))
         server_socket.listen()
 
         print("Servidor iniciado, aguardando conexões...\n")
@@ -71,8 +75,3 @@ class Server:
             conn, addr = server_socket.accept()
             print(f"Conexão estabelecida com {addr}")
             threading.Thread(target=self.handle_client, args=(conn, addr), daemon=True).start()
-
-if __name__ == "__main__":
-    os.system('cls' if os.name == 'nt' else 'clear')
-    server = Server()
-    server.start_server()
