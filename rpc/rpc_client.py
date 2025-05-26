@@ -1,6 +1,5 @@
 import socket
-import threading
-import os
+import importlib
 from . import rpc_stub_generator as stub
 
 BINDER_IP = '127.0.0.1'
@@ -8,7 +7,15 @@ BINDER_PORT = 5000
 
 class Client:
     def __init__(self):
-        self.math_stub = None
+        self.service_stub = any
+        
+    def generate_stub(self, service_name, server_ip, server_port):
+        stub_generator = stub.StubGenerator()
+        stub_generator.generate_stub(service_name,"client")
+        
+        stub_module_name = f"rpc.client_{service_name}_stub"
+        module = importlib.import_module(stub_module_name)
+        self.service_stub = getattr(module, f"{service_name.capitalize()}ClientStub")(server_ip, server_port)
     
     def start_service_search(self, service_name):
         search_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,17 +34,4 @@ class Client:
 
             message_parts = search_response.split("|")
             server_ip, server_port = message_parts[0], int(message_parts[1])
-            self.math_stub = stub.MathStub(server_ip, server_port)
-    
-    def start_client(self, server_ip, server_port):
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((server_ip, server_port))
-
-        msg = "Olá servidor"
-
-        client_socket.send(msg.encode())
-
-if __name__ == "__main__":
-    os.system('cls' if os.name == 'nt' else 'clear')
-    client = Client()
-    client.start_service_search()
+            self.generate_stub(service_name, server_ip, server_port)

@@ -37,28 +37,31 @@ class Binder:
         
     
     def handle_connections(self, conn, addr):
-        while True:
-            message = conn.recv(1024).decode()
-            
-            if not message:
-                continue
-            
-            print(f"Mensagem recebida do endereço {addr}: {message}")
-            
-            message_fields = message.split("|")
-            
-            if "REGISTER" in message_fields:
-                register_response = self.register_service(message_fields[1], message_fields[2], message_fields[3], addr)
-                print("\n")
-                conn.send(register_response.encode())
-            
-            elif "LOOKUP" in message_fields:
-                search_response = self.search_service(message_fields[1], addr)
-                conn.send(search_response.encode())
-                print("\n")
-            
-            else:
-                print(f"Client/Server(addr)| A mensagem '{message}'  é inválida\n")
+        try:
+            while True:
+                message = conn.recv(1024).decode()
+                
+                if not message:
+                    continue
+                
+                print(f"Mensagem recebida do endereço {addr}: {message}")
+                
+                message_fields = message.split("|")
+                
+                if "REGISTER" in message_fields:
+                    register_response = self.register_service(message_fields[1], message_fields[2], message_fields[3], addr)
+                    print("\n")
+                    conn.send(register_response.encode())
+                
+                elif "LOOKUP" in message_fields:
+                    search_response = self.search_service(message_fields[1], addr)
+                    conn.send(search_response.encode())
+                    print("\n")
+                
+                else:
+                    print(f"Client/Server(addr)| A mensagem '{message}'  é inválida\n")
+        except KeyboardInterrupt:
+            print("\nEncerrando servidores...")
 
     def start_binder(self):
         binder_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

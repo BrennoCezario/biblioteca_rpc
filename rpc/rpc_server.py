@@ -1,23 +1,24 @@
 import socket
 import threading
-import os
-from . import serializer
-from interface import math_service
+import importlib
+import random
+from . import rpc_stub_generator as stub
 
 BINDER_IP = '127.0.0.1'
 BINDER_PORT = 5000
 
+services = [
+    'math'
+]
+
 class Server:
-    def __init__(self, ip):
+    def __init__(self, ip, port):
         self.ip = ip
-        self.services = {
-            'math': math_service.DistributedCalculator()
-        }
-        self.port = 5001
-    
+        self.port = port
+        self.service_stub = any
+       
     def handle_client(self, conn, addr):
         while True:
-            try:
                 message = conn.recv(1024)
                 
                 if not message:
@@ -25,34 +26,31 @@ class Server:
                 
                 print(f"Mensagem recebida do endereço {addr}: {message}")
                 
-                codec = serializer.Serializer()
-                function_name, args = codec.desserialize_function(message)
-                print(f"Mensagem Desserializada: {function_name, args}")
+                response = self.service_stub.process_message(message)
 
-                service = self.services.get(self.service_name)
-                if not service:
-                    print(f"Serviço {self.service_name} não existe")
+                conn.send(response)
                 
-                if not hasattr(service, function_name):
-                    print(f"Método {function_name} não encontrado")
-                
-                method = getattr(service, function_name)
-                result = method(*args)
-                
-                print(f"Resultado da Operação: {result}\n")
-                serialized_message = codec.serialize_result(result)
-                conn.send(serialized_message)
-            
-            except Exception:
-                conn.send(codec.serialize_result(f"ERROR:{str(Exception)}"))
+    def generate_stub(self, service_name):
+        stub_generator = stub.StubGenerator()
+        stub_generator.generate_stub(service_name, "server")
+        
+        stub_module_name = f"rpc.server_{service_name}_stub"
+        module = importlib.import_module(stub_module_name)
+        self.service_stub = getattr(module, f"{service_name.capitalize()}ServerStub")()
                 
     def start_service_register(self, service_name):
         self.service_name = service_name
+        self.generate_stub(service_name)
+        
         register_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         register_socket.connect((BINDER_IP, BINDER_PORT))
 
-        print("Vamos iniciar o registro de um serviço!")
-        register_message = f"REGISTER|{self.service_name}|{self.ip}|{self.port}"
+        if service_name in services:
+            print("Vamos iniciar o registro de um serviço!")
+            register_message = f"REGISTER|{self.service_name}|{self.ip}|{self.port}"
+        else:
+            print("Serviço indisponível para o registro")
+            return
         
         print(f"\nIniciando registro de serviço com {register_message}\n")
 
@@ -62,6 +60,8 @@ class Server:
             print("Um serviço com esse nome já está registrado\n")
         else:
             print("Serviço Registrado com sucesso\n")
+        
+        self.start_server()
         
     def start_server(self):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

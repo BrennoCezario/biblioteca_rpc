@@ -4,11 +4,11 @@ class Serializer:
     def __init__(self):
         pass
     
-    def serialize_function(self, function, operand_1, operand_2):
-        return pickle.dumps((function, (operand_1, operand_2)))
+    def serialize_function(self, function, *args):
+        return pickle.dumps((function, (args)))
     
     def serialize_result(self, result):
-        return pickle.dumps(("RESULT", result))
+        return pickle.dumps((result))
     
     def desserialize_function(self, message):
         function_name, args = pickle.loads(message)

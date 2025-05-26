@@ -49,24 +49,13 @@ Para executar a implementação da biblioteca RPC, primeiro, é necessário inic
 
 Para adicionar novos serviços à biblioteca RPC temos alguns passos:
 
-1. Criar serviço em ```interface/```
+1. Criar serviço em ```interface/``` (para utilizar o exemplo math_plus_service, insira 'math_plus' em ```service_name``` ao invés de 'math', no módulo server_example);
 
-2. Adicionar uma instância do serviço no dicionário services da classe Server em rpc_server:
-```py
-    self.services = {
-                'math': math_service.DistributedCalculator()
-                'example': service.ServiceClass()
-            }
-```
+2. Adicionar nome do serviço, exemplo "math" no array ```services``` de rpc_server;
 
-3. Adicione os exemplos que serão registrados em server_example e chame a função start_service_register da instância de rpc_server:
-```py
-    service_1 = "math"
-    service_2 = "example"
-    ...
-    server.start_service_register(service_1)
-    server.start_service_register(service_2)
-```
+3. Adicionar porta para o novo serviço no array ```ports```, em server_example
+
+4. Adicionar uma instância do servidor em server_example para cada serviço que deseja criar
 
 ## Exemplos de execução
 
